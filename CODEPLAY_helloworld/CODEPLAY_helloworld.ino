@@ -67,18 +67,4 @@ joystick.joy_y = ValY;
 
 Serial.write((uint8_t*)&joystick, sizeof(joystick));
 
-
-
-/*
-Serial.println("##################");
-Serial.print("Butt1 ");
-Serial.println(digitalRead(Butt1));
-Serial.print("Butt2 ");
-Serial.println(digitalRead(Butt2));
-Serial.print("Butt3 ");
-Serial.println(digitalRead(Butt3));
-Serial.print("Butt4 ");
-Serial.println(digitalRead(Butt4));
-*/
-
 }
