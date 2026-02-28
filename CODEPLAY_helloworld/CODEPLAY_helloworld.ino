@@ -90,7 +90,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 1500);
         vTaskDelay(120 / portTICK_PERIOD_MS);
         noTone(buzzer);
-
+        serialFlush();
 
       } else if (indata == 0x02) {
         //heal sound 
@@ -102,7 +102,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 300);
         vTaskDelay(60 / portTICK_PERIOD_MS);
         noTone(buzzer);
-
+        serialFlush();
 
       } else if (indata == 0x03) {
         //kill
@@ -114,7 +114,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 50);
         vTaskDelay(300 / portTICK_PERIOD_MS);
         noTone(buzzer);
-
+        serialFlush();
 
       } else if (indata == 0x04) {
         //damage
@@ -126,7 +126,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 100);
         vTaskDelay(500 / portTICK_PERIOD_MS);
         noTone(buzzer);
-
+        serialFlush();
         
       } else if (indata == 0x05) {
         //death
@@ -141,9 +141,16 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 300);
         vTaskDelay(750 / portTICK_PERIOD_MS);
         noTone(buzzer);
+        serialFlush();
 
       }
     }
+  }
+}
+
+void serialFlush(){
+  while(Serial.available() > 0) {
+    char t = Serial.read();
   }
 }
 
