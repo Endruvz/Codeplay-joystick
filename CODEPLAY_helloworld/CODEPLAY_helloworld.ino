@@ -1,4 +1,8 @@
 #include <FastLED.h>
+#include <LSM6DS3-SOLDERED.h>
+
+Soldered_LSM6DS3 lsm6ds3;
+
 typedef struct {
   int16_t buttons;
   int16_t joy_x;
@@ -34,6 +38,14 @@ TaskHandle_t ReceiveTaskHandle = NULL;
 
 void SensTask(void *parameter) {
   for (;;) {
+    int32_t accelerometer[3];
+    lsm6ds3.getAcceleratorAxes(accelerometer);
+    joystick.tilt_x = map(accelerometer[0], -550, 550, -100, 100);
+    joystick.tilt_y = map(accelerometer[1], -550, 550, -100, 100);
+    joystick.tilt_z = map(accelerometer[2], -550, 550, -100, 100);
+
+
+
     int ValX = map(analogRead(PinX), 0, 4095, -100, 100);
     int ValY = map(analogRead(PinY), 0, 4095, -100, 100);
 
@@ -56,6 +68,9 @@ void SensTask(void *parameter) {
     joystick.joy_y = ValY;
 
     Serial.write((uint8_t *)&joystick, sizeof(joystick));
+
+
+
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
@@ -75,7 +90,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 1500);
         vTaskDelay(120 / portTICK_PERIOD_MS);
         noTone(buzzer);
-        
+
 
       } else if (indata == 0x02) {
         //heal sound 
@@ -88,6 +103,7 @@ void ReceiveTask(void *parameter) {
         vTaskDelay(60 / portTICK_PERIOD_MS);
         noTone(buzzer);
 
+
       } else if (indata == 0x03) {
         //kill
         noTone(buzzer);
@@ -98,6 +114,8 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 50);
         vTaskDelay(300 / portTICK_PERIOD_MS);
         noTone(buzzer);
+
+
       } else if (indata == 0x04) {
         //damage
         noTone(buzzer);
@@ -108,6 +126,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 100);
         vTaskDelay(500 / portTICK_PERIOD_MS);
         noTone(buzzer);
+
         
       } else if (indata == 0x05) {
         //death
@@ -122,6 +141,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 300);
         vTaskDelay(750 / portTICK_PERIOD_MS);
         noTone(buzzer);
+
       }
     }
   }
@@ -145,6 +165,10 @@ void setup() {
   FastLED.addLeds<WS2812B, PinLed>(led, NUM_LEDS);
 
   Serial.begin(115200);
+
+  Wire.begin();
+  lsm6ds3.begin();
+  lsm6ds3.enableAccelerator();
 
   //startup sound
   tone(buzzer, 300);
@@ -177,7 +201,7 @@ void setup() {
     NULL,                // Parameters
     1,                   // Priority
     &ReceiveTaskHandle,  // Task handle
-    0                    // Core 1
+    0                    // Core 0
   );
 }
 
