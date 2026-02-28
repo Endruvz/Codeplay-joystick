@@ -37,8 +37,6 @@ int startNode;
 int endNode;
 String znak;
 
-bool alive = true;
-
 int screenLines[20];
 int screenConnect[9][9]{
   {0,1,21,3,4,0,22,0,23},
@@ -137,12 +135,7 @@ void SensTask(void *parameter) {
     gumbi = gumbi | digitalRead(Butt1) | digitalRead(Butt2) * 2 | digitalRead(Butt3) * 4 | digitalRead(Butt4) * 8 | digitalRead(joystickButton) * 16;
     joystick.buttons = gumbi;
 
-    if (!alive){
-      //sleep
-      while(digitalRead(Butt1) && digitalRead(Butt4)){}
-      alive = true;
-    }
-    if (alive){Serial.write((uint8_t *)&joystick, sizeof(joystick));}
+    Serial.write((uint8_t *)&joystick, sizeof(joystick));
 
     if (draw){
 
@@ -331,6 +324,13 @@ void ReceiveTask(void *parameter) {
         
       } else if (indata == 0x05) {
         //death
+
+        if (SensTaskHandle != NULL){
+          vTaskDelete(SensTaskHandle);
+          SensTaskHandle = NULL;
+        }
+        Serial.flush();
+
         noTone(buzzer);
         digitalWrite(vibMotor, HIGH);
         tone(buzzer, 1100);
@@ -343,7 +343,10 @@ void ReceiveTask(void *parameter) {
         vTaskDelay(750 / portTICK_PERIOD_MS);
         noTone(buzzer);
 
-        alive = false;
+        Serial.flush();
+
+        esp_sleep_enable_ext0_wakeup((gpio_num_t) Butt4, LOW);
+        esp_deep_sleep_start();
 
       }
     }
