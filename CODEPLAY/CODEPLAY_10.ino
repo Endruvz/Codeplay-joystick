@@ -15,6 +15,7 @@ typedef struct {
 
 joystick_packet_t joystick = {0};
 
+
 #define Butt1 41
 #define Butt2 40
 #define Butt3 39
@@ -24,6 +25,7 @@ joystick_packet_t joystick = {0};
 #define PinX 11
 #define PinY 12
 int deadZone = 5;
+
 
 bool draw = false;
 bool drawStart = false;
@@ -91,6 +93,7 @@ String characterIndexFind[36] = {
 
 char characterList[36]{'1','2','3','4','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
 
+
 #define PinLed 2
 #define NUM_LEDS 1
 CRGB led[NUM_LEDS];
@@ -106,8 +109,18 @@ TaskHandle_t ReceiveTaskHandle = NULL;
 void SensTask(void *parameter) {
   for (;;) {
 
+    int32_t accelerometer[3];
+    lsm6ds3.getAcceleratorAxes(accelerometer);
+    joystick.tilt_x = map(accelerometer[0], -550, 550, -100, 100);
+    joystick.tilt_y = map(accelerometer[1], -550, 550, -100, 100);
+    joystick.tilt_z = map(accelerometer[2], -550, 550, -100, 100);
+
+
+
+
     int ValX = map(analogRead(PinX), 0, 4095, -100, 100);
     int ValY = map(analogRead(PinY), 0, 4095, -100, 100);
+
 
     if (abs(ValX) <= deadZone){
       ValX = 0;
@@ -224,6 +237,29 @@ void SensTask(void *parameter) {
     }
     
 
+    if (abs(ValX) <= deadZone) {
+      ValX = 0;
+    }
+
+    if (abs(ValY) <= deadZone) {
+      ValY = 0;
+    }
+
+
+    int gumbi = 0;
+    gumbi = gumbi | digitalRead(Butt1) | digitalRead(Butt2) * 2 | digitalRead(Butt3) * 4 | digitalRead(Butt4) * 8 | digitalRead(joystickButton) * 16;
+
+
+    joystick.buttons = gumbi;
+
+    joystick.joy_x = ValX;
+    joystick.joy_y = ValY;
+
+    Serial.write((uint8_t *)&joystick, sizeof(joystick));
+
+
+
+
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
@@ -240,9 +276,20 @@ void ReceiveTask(void *parameter) {
         noTone(buzzer);
         tone(buzzer, 1000);
         vTaskDelay(80 / portTICK_PERIOD_MS);
+
         tone(buzzer, 1500);
         vTaskDelay(120 / portTICK_PERIOD_MS);
         noTone(buzzer);
+
+
+        if (Serial.available()) {
+          
+          if ()
+        }
+        tone(buzzer, 1500);
+        vTaskDelay(120 / portTICK_PERIOD_MS);
+        noTone(buzzer);
+        serialFlush();
 
 
       } else if (indata == 0x02) {
@@ -255,6 +302,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 300);
         vTaskDelay(60 / portTICK_PERIOD_MS);
         noTone(buzzer);
+        serialFlush();
 
 
       } else if (indata == 0x03) {
@@ -267,7 +315,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 50);
         vTaskDelay(300 / portTICK_PERIOD_MS);
         noTone(buzzer);
-
+        serialFlush();
 
       } else if (indata == 0x04) {
         //damage
@@ -279,7 +327,7 @@ void ReceiveTask(void *parameter) {
         tone(buzzer, 100);
         vTaskDelay(500 / portTICK_PERIOD_MS);
         noTone(buzzer);
-
+        serialFlush();
         
       } else if (indata == 0x05) {
         //death
@@ -305,7 +353,19 @@ void ReceiveTask(void *parameter) {
 void setup() {
   draw = true;
   drawStart = false;
+        serialFlush();
+      }
+    }
+  }
+}
 
+void serialFlush(){
+  while(Serial.available() > 0) {
+    char t = Serial.read();
+  }
+}
+
+void setup() {
   pinMode(Butt1, INPUT_PULLUP);
   pinMode(Butt2, INPUT_PULLUP);
   pinMode(Butt3, INPUT_PULLUP);
@@ -373,4 +433,5 @@ void setup() {
 }
 
 void loop() {
+  
 }
