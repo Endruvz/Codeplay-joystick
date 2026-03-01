@@ -19,12 +19,13 @@ joystick_packet_t last_joystick = { 0 };
 #define TIMEOUT 30000
 unsigned long lastActivity = 0;
 
-
+#define boot 0
 #define Butt1 41
 #define Butt2 40
 #define Butt3 39
 #define Butt4 14
-#define debounce 10
+bool bootPressed = false;
+bool debounce = true;
 int gumbi;
 unsigned long lastPress = 0;
 
@@ -113,8 +114,16 @@ TaskHandle_t ReceiveTaskHandle = NULL;
 
 void SensTask(void *parameter) {
   lastActivity = millis();
+  bootPressed = digitalRead(boot);
 
   for (;;) {
+
+    if(bootPressed && debounce){
+      debounce = false;
+      draw = !draw;
+    } else if (!bootPressed && !debounce){
+      debounce = true;
+    }
 
     if (!draw) {
       int32_t accelerometer[3];
@@ -352,6 +361,7 @@ bool inputChanged(const joystick_packet_t &current, const joystick_packet_t &las
 
 
 void setup() {
+  pinMode(boot, INPUT_PULLUP);
   pinMode(Butt1, INPUT_PULLUP);
   pinMode(Butt2, INPUT_PULLUP);
   pinMode(Butt3, INPUT_PULLUP);
