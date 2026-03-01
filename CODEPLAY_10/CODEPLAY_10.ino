@@ -24,7 +24,9 @@ unsigned long lastActivity = 0;
 #define Butt2 40
 #define Butt3 39
 #define Butt4 14
+#define debounce 10
 int gumbi;
+unsigned long lastPress = 0;
 
 #define joystickButton 10
 #define PinX 11
@@ -138,8 +140,12 @@ void SensTask(void *parameter) {
 
     gumbi = 0;
     gumbi = gumbi | digitalRead(Butt1) | digitalRead(Butt2) * 2 | digitalRead(Butt3) * 4 | digitalRead(Butt4) * 8 | digitalRead(joystickButton) * 16;
-    joystick.buttons = gumbi;
 
+    if (gumbi != joystick.buttons && millis() - lastPress > debounce){
+      joystick.buttons = gumbi;
+      lastPress = millis();
+    }
+    
     if (inputChanged(joystick, last_joystick)) {
       Serial.write((uint8_t *)&joystick, sizeof(joystick));
       last_joystick = joystick;
@@ -281,14 +287,9 @@ void ReceiveTask(void *parameter) {
 
       } else if (indata == 0x04) {
         //damage
-        noTone(buzzer);
         digitalWrite(vibMotor, HIGH);
-        tone(buzzer, 200);
-        vTaskDelay(300 / portTICK_PERIOD_MS);
-        digitalWrite(vibMotor, LOW);
-        tone(buzzer, 100);
         vTaskDelay(500 / portTICK_PERIOD_MS);
-        noTone(buzzer);
+        digitalWrite(vibMotor, LOW);
         serialFlush();
 
       } else if (indata == 0x05) {
@@ -297,7 +298,7 @@ void ReceiveTask(void *parameter) {
           vTaskDelete(SensTaskHandle);
           SensTaskHandle = NULL;
         }
-        
+
         noTone(buzzer);
         digitalWrite(vibMotor, HIGH);
         tone(buzzer, 1100);
