@@ -114,14 +114,15 @@ TaskHandle_t ReceiveTaskHandle = NULL;
 
 void SensTask(void *parameter) {
   lastActivity = millis();
-  bootPressed = digitalRead(boot);
 
   for (;;) {
 
-    if(bootPressed && debounce){
+    bootPressed = digitalRead(boot);
+    
+    if(!bootPressed && debounce){
       debounce = false;
       draw = !draw;
-    } else if (!bootPressed && !debounce){
+    } else if (bootPressed == 1 && !debounce){
       debounce = true;
     }
 
