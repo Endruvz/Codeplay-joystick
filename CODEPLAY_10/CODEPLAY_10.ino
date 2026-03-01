@@ -140,12 +140,13 @@ void SensTask(void *parameter) {
 
     gumbi = 0;
     gumbi = gumbi | digitalRead(Butt1) | digitalRead(Butt2) * 2 | digitalRead(Butt3) * 4 | digitalRead(Butt4) * 8 | digitalRead(joystickButton) * 16;
+    joystick.buttons = gumbi;
 
-    if (gumbi != joystick.buttons && millis() - lastPress > debounce){
+/*    if (gumbi != joystick.buttons && millis() - lastPress > debounce){
       joystick.buttons = gumbi;
       lastPress = millis();
     }
-    
+*/    
     if (inputChanged(joystick, last_joystick)) {
       Serial.write((uint8_t *)&joystick, sizeof(joystick));
       last_joystick = joystick;
@@ -324,17 +325,13 @@ void serialFlush() {
 }
 
 void deepSleep() {
-  Serial.flush();
-
-  if (SensTaskHandle != NULL) {
-    vTaskDelete(SensTaskHandle);
-    SensTaskHandle = NULL;
-  }
 
   FastLED.clear();
   FastLED.show();
   noTone(buzzer);
   digitalWrite(vibMotor, LOW);
+
+  Serial.flush();
 
   esp_sleep_enable_ext0_wakeup((gpio_num_t)Butt4, LOW);
   esp_deep_sleep_start();
